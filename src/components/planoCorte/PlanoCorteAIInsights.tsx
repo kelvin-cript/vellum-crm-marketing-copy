@@ -8,7 +8,7 @@ interface PlanoCorteAIInsightsProps {
 
 interface PlanoCorteAIInsight {
   id: string;
-  category: 'conversao' | 'retencao' | 'carrinho' | 'configuracao' | 'cancelamento';
+  category: 'conversao' | 'retencao' | 'carrinho' | 'vendedor' | 'producao' | 'cancelamento';
   title: string;
   description: string;
   priority: 'high' | 'medium' | 'low';
@@ -31,7 +31,8 @@ export const PlanoCorteAIInsights: React.FC<PlanoCorteAIInsightsProps> = ({ data
     { id: 'conversao', label: 'Conversão', icon: <TrendingUp className="w-4 h-4" /> },
     { id: 'retencao', label: 'Retenção', icon: <Users className="w-4 h-4" /> },
     { id: 'carrinho', label: 'Carrinho', icon: <Package className="w-4 h-4" /> },
-    { id: 'configuracao', label: 'Configuração', icon: <Target className="w-4 h-4" /> },
+    { id: 'vendedor', label: 'Vendedores', icon: <Target className="w-4 h-4" /> },
+    { id: 'producao', label: 'Produção', icon: <CheckCircle className="w-4 h-4" /> },
     { id: 'cancelamento', label: 'Cancelamentos', icon: <AlertCircle className="w-4 h-4" /> }
   ];
 
@@ -185,7 +186,7 @@ export const PlanoCorteAIInsights: React.FC<PlanoCorteAIInsightsProps> = ({ data
           </h3>
           <p className="text-lg text-gray-300 mb-8 max-w-2xl mx-auto">
             Nossa IA analisará seus dados do Plano de Corte e gerará insights estratégicos para reduzir carrinho abandonado, 
-            aumentar conversões e otimizar todo o processo de vendas.
+            acelerar aprovações, otimizar a produção e aumentar a taxa de conversão.
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -194,7 +195,7 @@ export const PlanoCorteAIInsights: React.FC<PlanoCorteAIInsightsProps> = ({ data
                 <TrendingUp className="w-6 h-6 text-purple-400" />
               </div>
               <h4 className="font-semibold text-white mb-1">Otimização de Conversão</h4>
-              <p className="text-sm text-gray-400">Estratégias para aumentar finalização</p>
+              <p className="text-sm text-gray-400">Estratégias para aumentar aprovações</p>
             </div>
             
             <div className="text-center">
@@ -202,15 +203,15 @@ export const PlanoCorteAIInsights: React.FC<PlanoCorteAIInsightsProps> = ({ data
                 <Package className="w-6 h-6 text-blue-400" />
               </div>
               <h4 className="font-semibold text-white mb-1">Recuperação de Carrinho</h4>
-              <p className="text-sm text-gray-400">Campanhas para carrinho abandonado</p>
+              <p className="text-sm text-gray-400">Campanhas para projetos abandonados</p>
             </div>
             
             <div className="text-center">
               <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center mx-auto mb-3">
                 <Target className="w-6 h-6 text-green-400" />
               </div>
-              <h4 className="font-semibold text-white mb-1">Suporte Proativo</h4>
-              <p className="text-sm text-gray-400">Ajuda para configuração de arquivos</p>
+              <h4 className="font-semibold text-white mb-1">Acelerar Vendedores</h4>
+              <p className="text-sm text-gray-400">Otimização do tempo de resposta</p>
             </div>
           </div>
 
@@ -308,87 +309,112 @@ export const PlanoCorteAIInsights: React.FC<PlanoCorteAIInsightsProps> = ({ data
 const generatePlanoCorteInsights = (data: PlanoCorteProcessedData): PlanoCorteAIInsight[] => {
   const insights: PlanoCorteAIInsight[] = [];
 
-  // Insight 1: Carrinho Abandonado
-  if (data.carrinhoAbandonado > 0) {
+  // Insight 1: Carrinho Abandonado (Aguardando Aprovação)
+  if (data.aguardandoAprovacao > 0) {
     insights.push({
       id: 'carrinho-abandonado-1',
       category: 'carrinho',
-      title: 'Recuperar Carrinho Abandonado',
-      description: `${data.carrinhoAbandonado} clientes abandonaram carrinho. Valor potencial: R$ ${(data.carrinhoAbandonadoClientes.reduce((sum, c) => sum + c.valorCarrinho, 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      title: 'Recuperar Projetos Abandonados',
+      description: `${data.aguardandoAprovacao} clientes enviaram projetos mas não finalizaram. Valor potencial: R$ ${(data.carrinhoAbandonadoClientes.reduce((sum, c) => sum + c.valorCarrinho, 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
       priority: 'high',
       actionType: 'email',
       implementation: [
-        'Criar sequência de email automática para carrinho abandonado',
-        'Enviar primeiro email após 2 horas de abandono',
-        'Oferecer desconto progressivo (5%, 10%, 15%) nos próximos emails'
+        'Criar sequência de email automática para projetos abandonados',
+        'Enviar primeiro email após 4 horas de abandono',
+        'Oferecer desconto progressivo (5%, 10%, 15%) nos próximos emails',
+        'Incluir tutorial de como finalizar o pedido'
       ],
-      expectedImpact: 'Recuperação de 25-30% dos carrinhos abandonados',
-      metrics: ['Taxa de recuperação de carrinho', 'Receita recuperada', 'Taxa de abertura de emails'],
+      expectedImpact: 'Recuperação de 25-30% dos projetos abandonados',
+      metrics: ['Taxa de recuperação de projetos', 'Receita recuperada', 'Taxa de abertura de emails'],
       icon: '🛒'
     });
   }
 
-  // Insight 2: Clientes configurando arquivo
-  if (data.configurandoArquivo > 0) {
+  // Insight 2: Aguardando Vendedor
+  if (data.aguardandoVendedor > 0) {
     insights.push({
-      id: 'configuracao-arquivo-1',
-      category: 'configuracao',
-      title: 'Suporte para Configuração de Arquivo',
-      description: `${data.configurandoArquivo} clientes estão com dificuldade para configurar arquivos. Valor em risco: R$ ${(data.clientesConfigurandoArquivo.reduce((sum, c) => sum + c.valorProjeto, 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      id: 'aguardando-vendedor-1',
+      category: 'vendedor',
+      title: 'Acelerar Resposta dos Vendedores',
+      description: `${data.aguardandoVendedor} clientes aguardando retorno há mais tempo que o ideal. Reduzir tempo de resposta para aumentar conversão.`,
       priority: 'high',
-      actionType: 'suporte',
+      actionType: 'estrategia',
       implementation: [
-        'Criar tutorial em vídeo passo-a-passo para upload de arquivos',
-        'Implementar chat de suporte proativo para estes clientes',
-        'Enviar WhatsApp com link direto para suporte técnico'
+        'Implementar SLA de 2 horas para resposta de vendedores',
+        'Criar sistema de notificação automática para vendedores',
+        'Implementar dashboard de acompanhamento para gestores',
+        'Treinar equipe para respostas mais rápidas e eficientes'
       ],
-      expectedImpact: 'Redução de 60% no tempo de configuração',
-      metrics: ['Taxa de sucesso na configuração', 'Tempo médio de configuração', 'Satisfação do cliente'],
-      icon: '⚙️'
+      expectedImpact: 'Redução de 50% no tempo médio de resposta',
+      metrics: ['Tempo médio de resposta', 'Taxa de conversão pós-contato', 'Satisfação do cliente'],
+      icon: '👤'
     });
   }
 
   // Insight 3: Taxa de conversão baixa
-  if (data.taxaConversao < 50) {
+  if (data.taxaConversao < 60) {
     insights.push({
       id: 'conversao-baixa-1',
       category: 'conversao',
       title: 'Otimizar Taxa de Conversão',
-      description: `Taxa de conversão atual: ${data.taxaConversao.toFixed(1)}%. Há oportunidade de melhoria significativa no funil.`,
+      description: `Taxa de conversão atual: ${data.taxaConversao.toFixed(1)}%. Há oportunidade significativa de melhoria no funil.`,
       priority: 'medium',
       actionType: 'estrategia',
       implementation: [
-        'Analisar pontos de atrito no processo de compra',
-        'Simplificar formulários e reduzir etapas',
-        'Implementar prova social e depoimentos de clientes'
+        'Analisar pontos de atrito entre envio de projeto e aprovação',
+        'Simplificar processo de aprovação automática',
+        'Implementar chat proativo durante o processo',
+        'Criar FAQ específico para dúvidas sobre aprovação'
       ],
       expectedImpact: 'Aumento de 15-20% na taxa de conversão',
-      metrics: ['Taxa de conversão por etapa', 'Tempo no funil', 'Taxa de abandono por página'],
+      metrics: ['Taxa de conversão por etapa', 'Tempo no funil', 'Taxa de abandono por status'],
       icon: '📈'
     });
   }
 
-  // Insight 4: Clientes recorrentes
+  // Insight 4: Clientes com pedidos aprovados há muito tempo
+  if (data.aprovados > 0) {
+    insights.push({
+      id: 'producao-atraso-1',
+      category: 'producao',
+      title: 'Acelerar Produção',
+      description: `${data.aprovados} pedidos aprovados aguardando finalização. Monitorar prazo de produção para evitar insatisfação.`,
+      priority: 'medium',
+      actionType: 'estrategia',
+      implementation: [
+        'Implementar acompanhamento automático de prazo de produção',
+        'Enviar atualizações por WhatsApp sobre status do pedido',
+        'Criar sistema de alerta para pedidos próximos do prazo',
+        'Implementar compensação para atrasos (desconto futuro)'
+      ],
+      expectedImpact: 'Redução de 30% nas reclamações sobre prazo',
+      metrics: ['Tempo médio de produção', 'Taxa de atraso', 'NPS do cliente'],
+      icon: '⚙️'
+    });
+  }
+
+  // Insight 5: Clientes recorrentes
   if (data.clientesRecorrentes.length > 0) {
     insights.push({
       id: 'clientes-recorrentes-1',
       category: 'retencao',
-      title: 'Programa de Fidelidade VIP',
+      title: 'Programa VIP para Clientes Recorrentes',
       description: `${data.clientesRecorrentes.length} clientes recorrentes geram valor significativo. Criar programa de benefícios exclusivos.`,
       priority: 'medium',
       actionType: 'estrategia',
       implementation: [
-        'Criar programa VIP com descontos progressivos',
-        'Oferecer atendimento prioritário para clientes recorrentes',
-        'Implementar sistema de pontos por compras'
+        'Criar programa VIP com aprovação mais rápida',
+        'Oferecer desconto progressivo por número de projetos',
+        'Implementar linha direta de atendimento VIP',
+        'Envio prioritário para clientes recorrentes'
       ],
       expectedImpact: 'Aumento de 30% na retenção de clientes VIP',
-      metrics: ['Taxa de retenção', 'Frequência de compra', 'Valor vitalício do cliente'],
+      metrics: ['Taxa de retenção', 'Frequência de projetos', 'Valor vitalício do cliente'],
       icon: '👑'
     });
   }
 
-  // Insight 5: Cancelamentos
+  // Insight 6: Cancelamentos
   if (data.pedidosCancelados > 0) {
     insights.push({
       id: 'cancelamentos-1',
@@ -398,9 +424,10 @@ const generatePlanoCorteInsights = (data: PlanoCorteProcessedData): PlanoCorteAI
       priority: 'high',
       actionType: 'estrategia',
       implementation: [
-        'Implementar pesquisa de motivo de cancelamento',
+        'Implementar pesquisa automática de motivo de cancelamento',
         'Criar processo de retenção antes do cancelamento',
-        'Oferecer alternativas como desconto ou parcelamento'
+        'Oferecer alternativas como mudança de prazo ou desconto',
+        'Analisar padrões de cancelamento por tipo de projeto'
       ],
       expectedImpact: 'Redução de 40% na taxa de cancelamento',
       metrics: ['Taxa de cancelamento', 'Motivos de cancelamento', 'Taxa de retenção'],
@@ -408,25 +435,45 @@ const generatePlanoCorteInsights = (data: PlanoCorteProcessedData): PlanoCorteAI
     });
   }
 
-  // Insight 6: Aguardando vendedor
-  if (data.aguardandoVendedor > 0) {
+  // Insight 7: WhatsApp para clientes aguardando
+  if (data.aguardandoVendedor > 0 || data.aguardandoAprovacao > 0) {
     insights.push({
-      id: 'aguardando-vendedor-1',
+      id: 'whatsapp-followup-1',
       category: 'conversao',
-      title: 'Acelerar Atendimento de Vendedores',
-      description: `${data.aguardandoVendedor} clientes aguardando retorno do vendedor. Reduzir tempo de resposta.`,
+      title: 'Follow-up via WhatsApp',
+      description: `Implementar follow-up via WhatsApp para acelerar processo de aprovação e reduzir abandono.`,
       priority: 'medium',
-      actionType: 'estrategia',
+      actionType: 'whatsapp',
       implementation: [
-        'Implementar SLA de 2 horas para resposta de vendedores',
-        'Criar sistema de notificação automática para vendedores',
-        'Treinar equipe para respostas mais rápidas e eficientes'
+        'Configurar mensagens automáticas via WhatsApp para cada status',
+        'Criar templates personalizados por tipo de situação',
+        'Implementar chatbot para dúvidas frequentes',
+        'Enviar lembretes proativos sobre projetos pendentes'
       ],
-      expectedImpact: 'Redução de 50% no tempo de resposta',
-      metrics: ['Tempo médio de resposta', 'Taxa de conversão pós-contato', 'Satisfação do cliente'],
-      icon: '👤'
+      expectedImpact: 'Aumento de 40% na taxa de resposta vs email',
+      metrics: ['Taxa de resposta WhatsApp', 'Tempo de conversão', 'Satisfação do cliente'],
+      icon: '📱'
     });
   }
+
+  // Insight 8: Otimização de processo
+  insights.push({
+    id: 'otimizacao-processo-1',
+    category: 'conversao',
+    title: 'Otimizar Fluxo do Processo',
+    description: `Mapear e otimizar cada etapa do funil para reduzir tempo total desde projeto até entrega.`,
+    priority: 'medium',
+    actionType: 'estrategia',
+    implementation: [
+      'Mapear tempo médio de cada etapa do processo',
+      'Identificar gargalos e pontos de melhoria',
+      'Implementar aprovação automática para projetos padrão',
+      'Criar indicadores de performance por etapa'
+    ],
+    expectedImpact: 'Redução de 25% no tempo total do processo',
+    metrics: ['Tempo por etapa', 'Throughput do processo', 'Taxa de automação'],
+    icon: '⚡'
+  });
 
   return insights.slice(0, 8);
 };

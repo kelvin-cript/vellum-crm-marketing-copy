@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, BarChart3, Users, Package, TrendingUp, DollarSign, XCircle, Clock, AlertTriangle, Target, Brain, Zap } from 'lucide-react';
+import { ArrowLeft, BarChart3, Users, Package, TrendingUp, DollarSign, XCircle, Clock, AlertTriangle, Target, Brain, Zap, CheckCircle, UserCheck } from 'lucide-react';
 import { usePlanoCorteProcessor } from '../hooks/usePlanoCorteProcessor';
 import { PlanoCorteFileUpload } from '../components/planoCorte/PlanoCorteFileUpload';
 import { PlanoCorteFiltersComponent } from '../components/planoCorte/PlanoCorteFilters';
@@ -81,46 +81,61 @@ export const PlanoCorte: React.FC<PlanoCorteProps> = ({ onBack }) => {
               />
             </div>
 
-            {/* Métricas de Status */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+            {/* Funil de Status Completo */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
               <PlanoCorteMetricCard
-                title="Pedidos Finalizados"
-                value={processedData.pedidosFinalizados.toLocaleString('pt-BR')}
-                icon={<Package className="w-6 h-6 text-white" />}
-                color="green"
-                percentage={(processedData.pedidosFinalizados / processedData.totalPedidos) * 100}
-                onExport={() => exportToCSV([{ finalizados: processedData.pedidosFinalizados }], 'pedidos-finalizados')}
-              />
-
-              <PlanoCorteMetricCard
-                title="Carrinho Abandonado"
-                value={processedData.carrinhoAbandonado.toLocaleString('pt-BR')}
+                title="Aguardando Aprovação"
+                subtitle="Carrinho abandonado"
+                value={processedData.aguardandoAprovacao.toLocaleString('pt-BR')}
                 icon={<XCircle className="w-6 h-6 text-white" />}
                 color="yellow"
-                percentage={(processedData.carrinhoAbandonado / processedData.totalPedidos) * 100}
-                onExport={() => exportToCSV(processedData.carrinhoAbandonadoClientes, 'carrinho-abandonado')}
+                percentage={(processedData.aguardandoAprovacao / processedData.totalPedidos) * 100}
+                onExport={() => exportToCSV(processedData.carrinhoAbandonadoClientes, 'aguardando-aprovacao')}
               />
 
               <PlanoCorteMetricCard
                 title="Aguardando Vendedor"
+                subtitle="Enviado para análise"
                 value={processedData.aguardandoVendedor.toLocaleString('pt-BR')}
                 icon={<Clock className="w-6 h-6 text-white" />}
                 color="blue"
                 percentage={(processedData.aguardandoVendedor / processedData.totalPedidos) * 100}
-                onExport={() => exportToCSV([{ aguardandoVendedor: processedData.aguardandoVendedor }], 'aguardando-vendedor')}
+                onExport={() => exportToCSV(processedData.clientesAguardandoVendedor, 'aguardando-vendedor')}
               />
 
               <PlanoCorteMetricCard
-                title="Configurando Arquivo"
-                value={processedData.configurandoArquivo.toLocaleString('pt-BR')}
-                icon={<AlertTriangle className="w-6 h-6 text-white" />}
+                title="Aprovados"
+                subtitle="Pagos, em produção"
+                value={processedData.aprovados.toLocaleString('pt-BR')}
+                icon={<CheckCircle className="w-6 h-6 text-white" />}
                 color="purple"
-                percentage={(processedData.configurandoArquivo / processedData.totalPedidos) * 100}
-                onExport={() => exportToCSV(processedData.clientesConfigurandoArquivo, 'configurando-arquivo')}
+                percentage={(processedData.aprovados / processedData.totalPedidos) * 100}
+                onExport={() => exportToCSV(processedData.clientesAprovados, 'pedidos-aprovados')}
+              />
+
+              <PlanoCorteMetricCard
+                title="Finalizados"
+                subtitle="Prontos na fábrica"
+                value={processedData.finalizados.toLocaleString('pt-BR')}
+                icon={<Package className="w-6 h-6 text-white" />}
+                color="green"
+                percentage={(processedData.finalizados / processedData.totalPedidos) * 100}
+                onExport={() => exportToCSV([{ finalizados: processedData.finalizados }], 'pedidos-finalizados')}
+              />
+
+              <PlanoCorteMetricCard
+                title="Entregues"
+                subtitle="Entregues ao cliente"
+                value={processedData.entregues.toLocaleString('pt-BR')}
+                icon={<UserCheck className="w-6 h-6 text-white" />}
+                color="teal"
+                percentage={(processedData.entregues / processedData.totalPedidos) * 100}
+                onExport={() => exportToCSV([{ entregues: processedData.entregues }], 'pedidos-entregues')}
               />
 
               <PlanoCorteMetricCard
                 title="Cancelados"
+                subtitle="Pedidos cancelados"
                 value={processedData.pedidosCancelados.toLocaleString('pt-BR')}
                 icon={<XCircle className="w-6 h-6 text-white" />}
                 color="red"
@@ -133,11 +148,12 @@ export const PlanoCorte: React.FC<PlanoCorteProps> = ({ onBack }) => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <PlanoCorteMetricCard
                 title="Taxa de Conversão"
+                subtitle="Aprovados + Finalizados + Entregues"
                 value={`${processedData.taxaConversao.toFixed(1)}%`}
                 icon={<TrendingUp className="w-6 h-6 text-white" />}
                 color="green"
                 trend={processedData.taxaConversao > 50 ? 'up' : 'down'}
-                trendValue={processedData.taxaConversao > 50 ? 'Boa' : 'Pode melhorar'}
+                trendValue={processedData.taxaConversao > 50 ? 'Boa conversão' : 'Pode melhorar'}
               />
 
               <PlanoCorteMetricCard
@@ -146,11 +162,12 @@ export const PlanoCorte: React.FC<PlanoCorteProps> = ({ onBack }) => {
                 icon={<XCircle className="w-6 h-6 text-white" />}
                 color="red"
                 trend={processedData.taxaCancelamento < 10 ? 'up' : 'down'}
-                trendValue={processedData.taxaCancelamento < 10 ? 'Baixa' : 'Alta'}
+                trendValue={processedData.taxaCancelamento < 10 ? 'Baixa taxa' : 'Taxa elevada'}
               />
 
               <PlanoCorteMetricCard
-                title="Valor Perdido (Cancelamentos)"
+                title="Valor Perdido"
+                subtitle="Total em cancelamentos"
                 value={`R$ ${processedData.valorPerdidoCancelamentos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
                 icon={<DollarSign className="w-6 h-6 text-white" />}
                 color="red"
@@ -173,7 +190,7 @@ export const PlanoCorte: React.FC<PlanoCorteProps> = ({ onBack }) => {
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-white">Melhores Clientes</h3>
-                    <p className="text-sm text-gray-400">Clientes com maior valor total gasto</p>
+                    <p className="text-sm text-gray-400">Clientes com maior valor efetivamente gasto</p>
                   </div>
                 </div>
                 <button
@@ -200,7 +217,13 @@ export const PlanoCorte: React.FC<PlanoCorteProps> = ({ onBack }) => {
                       </div>
                       <div>
                         <p><strong>Último Pedido:</strong> {new Date(cliente.ultimoPedido).toLocaleDateString('pt-BR')}</p>
-                        <p><strong>Status:</strong> {cliente.statusUltimoPedido}</p>
+                        <p><strong>Status:</strong> <span className={`px-2 py-1 rounded text-xs ${
+                          cliente.statusUltimoPedido.toLowerCase().includes('entregue') ? 'bg-green-500/20 text-green-400' :
+                          cliente.statusUltimoPedido.toLowerCase().includes('finalizado') ? 'bg-blue-500/20 text-blue-400' :
+                          cliente.statusUltimoPedido.toLowerCase().includes('aprovado') ? 'bg-purple-500/20 text-purple-400' :
+                          cliente.statusUltimoPedido.toLowerCase().includes('aguardando') ? 'bg-yellow-500/20 text-yellow-400' :
+                          'bg-red-500/20 text-red-400'
+                        }`}>{cliente.statusUltimoPedido}</span></p>
                       </div>
                     </div>
                     <div className="text-xs text-gray-500">
@@ -267,11 +290,11 @@ export const PlanoCorte: React.FC<PlanoCorteProps> = ({ onBack }) => {
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center">
                   <div className="p-3 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-xl mr-3">
-                    <Package className="w-6 h-6 text-white" />
+                    <XCircle className="w-6 h-6 text-white" />
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-white">Carrinho Abandonado</h3>
-                    <p className="text-sm text-gray-400">Clientes que abandonaram o carrinho</p>
+                    <p className="text-sm text-gray-400">Clientes que enviaram projeto mas não finalizaram</p>
                   </div>
                 </div>
                 <button
@@ -298,7 +321,64 @@ export const PlanoCorte: React.FC<PlanoCorteProps> = ({ onBack }) => {
                       </div>
                       <div>
                         <p><strong>Última Modificação:</strong> {new Date(cliente.dataUltimaModificacao).toLocaleDateString('pt-BR')}</p>
-                        <p><strong>Urgência:</strong> {cliente.diasAbandonado > 7 ? 'Alta' : cliente.diasAbandonado > 3 ? 'Média' : 'Baixa'}</p>
+                        <p><strong>Urgência:</strong> <span className={`px-2 py-1 rounded text-xs ${
+                          cliente.diasAbandonado > 7 ? 'bg-red-500/20 text-red-400' : 
+                          cliente.diasAbandonado > 3 ? 'bg-yellow-500/20 text-yellow-400' : 
+                          'bg-green-500/20 text-green-400'
+                        }`}>
+                          {cliente.diasAbandonado > 7 ? 'Alta' : cliente.diasAbandonado > 3 ? 'Média' : 'Baixa'}
+                        </span></p>
+                      </div>
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      <p><strong>Email:</strong> {cliente.email}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Aguardando Vendedor */}
+            <div className="bg-white/5 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-white/10">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center">
+                  <div className="p-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl mr-3">
+                    <Clock className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white">Aguardando Retorno do Vendedor</h3>
+                    <p className="text-sm text-gray-400">Projetos enviados para análise de vendedores</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => exportToCSV(processedData.clientesAguardandoVendedor, 'aguardando-vendedor')}
+                  className="px-4 py-2 bg-blue-500/20 text-blue-300 rounded-lg hover:bg-blue-500/30 transition-colors text-sm font-medium border border-blue-500/30"
+                >
+                  Exportar
+                </button>
+              </div>
+              
+              <div className="space-y-3 max-h-80 overflow-y-auto">
+                {processedData.clientesAguardandoVendedor.slice(0, 10).map((cliente, index) => (
+                  <div key={index} className="p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="font-semibold text-white">{cliente.nome}</p>
+                      <p className="font-bold text-lg text-blue-400">
+                        R$ {cliente.valorProjeto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-sm text-gray-400 mb-2">
+                      <div>
+                        <p><strong>Dias Aguardando:</strong> {cliente.diasAguardando}</p>
+                        <p><strong>Data Envio:</strong> {new Date(cliente.dataEnvio).toLocaleDateString('pt-BR')}</p>
+                      </div>
+                      <div>
+                        <p><strong>Urgência:</strong> <span className={`px-2 py-1 rounded text-xs ${
+                          cliente.urgencia === 'Alta' ? 'bg-red-500/20 text-red-400' : 
+                          cliente.urgencia === 'Média' ? 'bg-yellow-500/20 text-yellow-400' : 
+                          'bg-green-500/20 text-green-400'
+                        }`}>{cliente.urgencia}</span></p>
+                        <p><strong>SLA:</strong> {cliente.diasAguardando > 3 ? '⚠️ Atrasado' : '✅ No prazo'}</p>
                       </div>
                     </div>
                     <div className="text-xs text-gray-500">
@@ -314,67 +394,94 @@ export const PlanoCorte: React.FC<PlanoCorteProps> = ({ onBack }) => {
       case 'funil':
         return (
           <div className="space-y-8">
-            {/* Funil de Status */}
+            {/* Funil de Status Detalhado */}
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-white/10">
               <div className="flex items-center mb-6">
                 <div className="p-3 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl mr-3">
                   <Target className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white">Funil de Vendas por Status</h3>
-                  <p className="text-sm text-gray-400">Distribuição de pedidos por status</p>
+                  <h3 className="text-xl font-bold text-white">Funil Completo de Vendas</h3>
+                  <p className="text-sm text-gray-400">Fluxo completo desde o projeto até a entrega</p>
                 </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {processedData.funil.map((status, index) => (
-                  <div key={index} className="p-4 bg-white/5 rounded-xl border border-white/10">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-semibold text-white text-sm">{status.status}</h4>
-                      <span className="text-lg font-bold text-purple-400">{status.quantidade}</span>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-400">Percentual:</span>
-                        <span className="text-purple-300 font-medium">{status.percentual.toFixed(1)}%</span>
+                {processedData.funil.map((status, index) => {
+                  const getStatusColor = (statusName: string) => {
+                    const lower = statusName.toLowerCase();
+                    if (lower.includes('aguardando aprovação')) return 'border-yellow-500/30 bg-yellow-500/10';
+                    if (lower.includes('aguardando retorno')) return 'border-blue-500/30 bg-blue-500/10';
+                    if (lower.includes('aprovado')) return 'border-purple-500/30 bg-purple-500/10';
+                    if (lower.includes('finalizado')) return 'border-green-500/30 bg-green-500/10';
+                    if (lower.includes('entregue')) return 'border-teal-500/30 bg-teal-500/10';
+                    if (lower.includes('cancelado')) return 'border-red-500/30 bg-red-500/10';
+                    return 'border-gray-500/30 bg-gray-500/10';
+                  };
+
+                  const getStatusIcon = (statusName: string) => {
+                    const lower = statusName.toLowerCase();
+                    if (lower.includes('aguardando aprovação')) return '⏳';
+                    if (lower.includes('aguardando retorno')) return '👤';
+                    if (lower.includes('aprovado')) return '✅';
+                    if (lower.includes('finalizado')) return '📦';
+                    if (lower.includes('entregue')) return '🚚';
+                    if (lower.includes('cancelado')) return '❌';
+                    return '📋';
+                  };
+
+                  return (
+                    <div key={index} className={`p-4 rounded-xl border ${getStatusColor(status.status)}`}>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center">
+                          <span className="text-lg mr-2">{getStatusIcon(status.status)}</span>
+                          <h4 className="font-semibold text-white text-sm">{status.status}</h4>
+                        </div>
+                        <span className="text-lg font-bold text-white">{status.quantidade}</span>
                       </div>
                       
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-400">Valor Total:</span>
-                        <span className="text-green-400 font-medium">
-                          R$ {status.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </span>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-400">Percentual:</span>
+                          <span className="text-purple-300 font-medium">{status.percentual.toFixed(1)}%</span>
+                        </div>
+                        
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-400">Valor Total:</span>
+                          <span className="text-green-400 font-medium">
+                            R$ {status.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </span>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="mt-3">
-                      <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-gradient-to-r from-purple-500 to-purple-600 rounded-full transition-all duration-500"
-                          style={{ width: `${status.percentual}%` }}
-                        />
+                      <div className="mt-3">
+                        <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-purple-500 to-purple-600 rounded-full transition-all duration-500"
+                            style={{ width: `${status.percentual}%` }}
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
-            {/* Clientes Configurando Arquivo */}
+            {/* Clientes Aprovados */}
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-white/10">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center">
                   <div className="p-3 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl mr-3">
-                    <AlertTriangle className="w-6 h-6 text-white" />
+                    <CheckCircle className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-white">Clientes Configurando Arquivo</h3>
-                    <p className="text-sm text-gray-400">Clientes com dificuldade na configuração</p>
+                    <h3 className="text-xl font-bold text-white">Pedidos Aprovados</h3>
+                    <p className="text-sm text-gray-400">Projetos pagos e em produção</p>
                   </div>
                 </div>
                 <button
-                  onClick={() => exportToCSV(processedData.clientesConfigurandoArquivo, 'configurando-arquivo')}
+                  onClick={() => exportToCSV(processedData.clientesAprovados, 'pedidos-aprovados')}
                   className="px-4 py-2 bg-purple-500/20 text-purple-300 rounded-lg hover:bg-purple-500/30 transition-colors text-sm font-medium border border-purple-500/30"
                 >
                   Exportar
@@ -382,22 +489,26 @@ export const PlanoCorte: React.FC<PlanoCorteProps> = ({ onBack }) => {
               </div>
               
               <div className="space-y-3 max-h-80 overflow-y-auto">
-                {processedData.clientesConfigurandoArquivo.map((cliente, index) => (
+                {processedData.clientesAprovados.slice(0, 10).map((cliente, index) => (
                   <div key={index} className="p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors">
                     <div className="flex items-center justify-between mb-2">
                       <p className="font-semibold text-white">{cliente.nome}</p>
                       <p className="font-bold text-lg text-purple-400">
-                        R$ {cliente.valorProjeto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        R$ {cliente.valorPedido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </p>
                     </div>
                     <div className="grid grid-cols-2 gap-4 text-sm text-gray-400 mb-2">
                       <div>
-                        <p><strong>Dias Tentando:</strong> {cliente.diasTentandoConfigurar}</p>
-                        <p><strong>Tentativas:</strong> {cliente.tentativasConfiguracao}</p>
+                        <p><strong>Dias Aprovado:</strong> {cliente.diasAprovado}</p>
+                        <p><strong>Data Aprovação:</strong> {new Date(cliente.dataAprovacao).toLocaleDateString('pt-BR')}</p>
                       </div>
                       <div>
-                        <p><strong>Última Tentativa:</strong> {new Date(cliente.dataUltimaTentativa).toLocaleDateString('pt-BR')}</p>
-                        <p><strong>Prioridade:</strong> {cliente.diasTentandoConfigurar > 5 ? 'Alta' : 'Média'}</p>
+                        <p><strong>Status Produção:</strong> <span className={`px-2 py-1 rounded text-xs ${
+                          cliente.statusProducao === 'Atraso' ? 'bg-red-500/20 text-red-400' :
+                          cliente.statusProducao === 'Atenção' ? 'bg-yellow-500/20 text-yellow-400' :
+                          'bg-green-500/20 text-green-400'
+                        }`}>{cliente.statusProducao}</span></p>
+                        <p><strong>Prazo:</strong> {cliente.diasAprovado <= 10 ? '✅ No prazo' : cliente.diasAprovado <= 15 ? '⚠️ Atenção' : '🚨 Atrasado'}</p>
                       </div>
                     </div>
                     <div className="text-xs text-gray-500">
@@ -416,12 +527,12 @@ export const PlanoCorte: React.FC<PlanoCorteProps> = ({ onBack }) => {
                     <XCircle className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-white">Clientes com Cancelamentos</h3>
-                    <p className="text-sm text-gray-400">Clientes que cancelaram pedidos</p>
+                    <h3 className="text-xl font-bold text-white">Pedidos Cancelados</h3>
+                    <p className="text-sm text-gray-400">Projetos que foram cancelados</p>
                   </div>
                 </div>
                 <button
-                  onClick={() => exportToCSV(processedData.clientesCancelados, 'clientes-cancelados')}
+                  onClick={() => exportToCSV(processedData.clientesCancelados, 'pedidos-cancelados')}
                   className="px-4 py-2 bg-red-500/20 text-red-300 rounded-lg hover:bg-red-500/30 transition-colors text-sm font-medium border border-red-500/30"
                 >
                   Exportar
@@ -444,7 +555,7 @@ export const PlanoCorte: React.FC<PlanoCorteProps> = ({ onBack }) => {
                       </div>
                       <div>
                         <p><strong>Dias Desde Cancelamento:</strong> {cliente.diasUltimoCancelamento}</p>
-                        <p><strong>Status:</strong> Requer atenção</p>
+                        <p><strong>Status:</strong> <span className="px-2 py-1 rounded text-xs bg-red-500/20 text-red-400">Requer atenção</span></p>
                       </div>
                     </div>
                     <div className="text-xs text-gray-500">
@@ -497,7 +608,7 @@ export const PlanoCorte: React.FC<PlanoCorteProps> = ({ onBack }) => {
                 </h1>
                 <p className="text-sm text-gray-300 flex items-center mt-1">
                   <Brain className="w-4 h-4 mr-2" />
-                  Análise completa do funil de vendas com IA
+                  Análise completa do funil: Projeto → Aprovação → Produção → Entrega
                 </p>
               </div>
             </div>
@@ -510,14 +621,14 @@ export const PlanoCorte: React.FC<PlanoCorteProps> = ({ onBack }) => {
                   <span>pedidos</span>
                 </div>
                 <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/10">
-                  <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
-                  <span className="text-emerald-400 font-medium">{processedData.pedidosFinalizados}</span>
-                  <span>finalizados</span>
+                  <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                  <span className="text-green-400 font-medium">{processedData.entregues}</span>
+                  <span>entregues</span>
                 </div>
                 <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/10">
                   <span className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></span>
-                  <span className="text-yellow-400 font-medium">{processedData.carrinhoAbandonado}</span>
-                  <span>abandonados</span>
+                  <span className="text-yellow-400 font-medium">{processedData.aguardandoAprovacao}</span>
+                  <span>pendentes</span>
                 </div>
               </div>
             )}
@@ -543,9 +654,58 @@ export const PlanoCorte: React.FC<PlanoCorteProps> = ({ onBack }) => {
               </h2>
               
               <p className="text-xl text-gray-300 mb-8 max-w-4xl mx-auto leading-relaxed">
-                Sistema especializado para análise do Plano de Corte com métricas avançadas de conversão, 
-                carrinho abandonado, configuração de arquivos e insights de IA para maximizar suas vendas
+                Sistema especializado para análise do Plano de Corte. Acompanhe todo o fluxo: 
+                desde o projeto enviado pelo cliente até a entrega final, passando por aprovação, 
+                produção e todos os pontos críticos do seu negócio.
               </p>
+
+              <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 max-w-4xl mx-auto mb-12 border border-white/10">
+                <h3 className="text-xl font-bold text-white mb-4">Fluxo Completo do Plano de Corte</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-left">
+                  <div className="flex items-center space-x-3 p-3 bg-white/5 rounded-lg">
+                    <span className="text-xl">⏳</span>
+                    <div>
+                      <p className="text-sm font-medium text-yellow-300">Aguardando Aprovação</p>
+                      <p className="text-xs text-gray-400">Cliente enviou projeto, carrinho abandonado</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3 p-3 bg-white/5 rounded-lg">
+                    <span className="text-xl">👤</span>
+                    <div>
+                      <p className="text-sm font-medium text-blue-300">Aguardando Vendedor</p>
+                      <p className="text-xs text-gray-400">Projeto enviado para análise do vendedor</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3 p-3 bg-white/5 rounded-lg">
+                    <span className="text-xl">✅</span>
+                    <div>
+                      <p className="text-sm font-medium text-purple-300">Aprovado</p>
+                      <p className="text-xs text-gray-400">Cliente pagou, projeto em produção</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3 p-3 bg-white/5 rounded-lg">
+                    <span className="text-xl">📦</span>
+                    <div>
+                      <p className="text-sm font-medium text-green-300">Finalizado</p>
+                      <p className="text-xs text-gray-400">Pronto na fábrica, aguardando entrega</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3 p-3 bg-white/5 rounded-lg">
+                    <span className="text-xl">🚚</span>
+                    <div>
+                      <p className="text-sm font-medium text-teal-300">Entregue</p>
+                      <p className="text-xs text-gray-400">Entregue ao transportador ou cliente</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3 p-3 bg-white/5 rounded-lg">
+                    <span className="text-xl">❌</span>
+                    <div>
+                      <p className="text-sm font-medium text-red-300">Cancelado</p>
+                      <p className="text-xs text-gray-400">Projeto cancelado em qualquer etapa</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               <div className="flex items-center justify-center space-x-6 mb-12">
                 <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-sm px-4 py-2 rounded-full border border-emerald-500/30">
@@ -576,7 +736,7 @@ export const PlanoCorte: React.FC<PlanoCorteProps> = ({ onBack }) => {
                       Carregar Dados Excel
                     </h3>
                     <p className="text-gray-300">
-                      Faça upload da sua planilha Excel (.xlsx) e descubra insights poderosos
+                      Faça upload da sua planilha Excel (.xlsx) com os dados do Plano de Corte
                     </p>
                   </div>
 
@@ -597,7 +757,7 @@ export const PlanoCorte: React.FC<PlanoCorteProps> = ({ onBack }) => {
                       </div>
                       <div>
                         <h3 className="text-lg font-bold text-white">Modelo de Planilha Excel</h3>
-                        <p className="text-sm text-gray-300">Baixe o exemplo com as colunas corretas</p>
+                        <p className="text-sm text-gray-300">Baixe o exemplo com os status corretos</p>
                       </div>
                     </div>
                     <button
@@ -627,7 +787,7 @@ export const PlanoCorte: React.FC<PlanoCorteProps> = ({ onBack }) => {
                           <h3 className="text-lg font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
                             Plano de Corte
                           </h3>
-                          <p className="text-xs text-gray-400">Análise de Funil</p>
+                          <p className="text-xs text-gray-400">Funil de Vendas</p>
                         </div>
                       </div>
                     </div>
@@ -635,12 +795,32 @@ export const PlanoCorte: React.FC<PlanoCorteProps> = ({ onBack }) => {
                     <div className="grid grid-cols-2 gap-3 mb-6 relative z-10">
                       <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10">
                         <div className="flex items-center justify-between mb-2">
+                          <div className="p-1.5 rounded-lg bg-teal-500/20 border border-white/10">
+                            <UserCheck className="w-4 h-4 text-teal-400" />
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-400 mb-1">Entregues</p>
+                        <p className="text-sm font-bold text-teal-400">429</p>
+                      </div>
+
+                      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10">
+                        <div className="flex items-center justify-between mb-2">
                           <div className="p-1.5 rounded-lg bg-green-500/20 border border-white/10">
                             <Package className="w-4 h-4 text-green-400" />
                           </div>
                         </div>
                         <p className="text-xs text-gray-400 mb-1">Finalizados</p>
-                        <p className="text-sm font-bold text-green-400">847</p>
+                        <p className="text-sm font-bold text-green-400">187</p>
+                      </div>
+
+                      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="p-1.5 rounded-lg bg-purple-500/20 border border-white/10">
+                            <CheckCircle className="w-4 h-4 text-purple-400" />
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-400 mb-1">Aprovados</p>
+                        <p className="text-sm font-bold text-purple-400">93</p>
                       </div>
 
                       <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10">
@@ -649,28 +829,8 @@ export const PlanoCorte: React.FC<PlanoCorteProps> = ({ onBack }) => {
                             <XCircle className="w-4 h-4 text-yellow-400" />
                           </div>
                         </div>
-                        <p className="text-xs text-gray-400 mb-1">Abandonados</p>
-                        <p className="text-sm font-bold text-yellow-400">234</p>
-                      </div>
-
-                      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="p-1.5 rounded-lg bg-blue-500/20 border border-white/10">
-                            <Clock className="w-4 h-4 text-blue-400" />
-                          </div>
-                        </div>
-                        <p className="text-xs text-gray-400 mb-1">Aguardando</p>
-                        <p className="text-sm font-bold text-blue-400">156</p>
-                      </div>
-
-                      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="p-1.5 rounded-lg bg-purple-500/20 border border-white/10">
-                            <AlertTriangle className="w-4 h-4 text-purple-400" />
-                          </div>
-                        </div>
-                        <p className="text-xs text-gray-400 mb-1">Configurando</p>
-                        <p className="text-sm font-bold text-purple-400">89</p>
+                        <p className="text-xs text-gray-400 mb-1">Pendentes</p>
+                        <p className="text-sm font-bold text-yellow-400">156</p>
                       </div>
                     </div>
 
@@ -716,7 +876,7 @@ export const PlanoCorte: React.FC<PlanoCorteProps> = ({ onBack }) => {
                       </h2>
                       <p className="text-gray-300 flex items-center mt-1">
                         <Zap className="w-4 h-4 mr-2" />
-                        Navegue pelas diferentes análises do seu funil
+                        Acompanhe todo o funil: Projeto → Aprovação → Produção → Entrega
                       </p>
                     </div>
                   </div>

@@ -12,11 +12,12 @@ export interface PlanoCorteProcessedData {
   totalPedidos: number;
   totalReceita: number;
   ticketMedio: number;
-  pedidosFinalizados: number;
+  aguardandoAprovacao: number; // Carrinho abandonado
+  aguardandoVendedor: number;  // Enviado para vendedor
+  aprovados: number;           // Pagos, em produção
+  finalizados: number;         // Prontos na fábrica
+  entregues: number;           // Entregues ao cliente/transportador
   pedidosCancelados: number;
-  carrinhoAbandonado: number;
-  aguardandoVendedor: number;
-  configurandoArquivo: number;
   valorPerdidoCancelamentos: number;
   taxaCancelamento: number;
   taxaConversao: number;
@@ -24,8 +25,9 @@ export interface PlanoCorteProcessedData {
   melhoresClientes: PlanoCorteClienteMetric[];
   clientesRecorrentes: PlanoCorteClienteRecorrente[];
   carrinhoAbandonadoClientes: PlanoCorteCarrinhoAbandonado[];
+  clientesAguardandoVendedor: PlanoCorteAguardandoVendedor[];
   clientesCancelados: PlanoCorteClienteCancelado[];
-  clientesConfigurandoArquivo: PlanoCorteConfigurandoArquivo[];
+  clientesAprovados: PlanoCorteClienteAprovado[];
   metricas30Dias: PlanoCorteMetrica30Dias;
   funil: PlanoCorteStatusFunil[];
   temposPorStatus: PlanoCorteTempoStatus[];
@@ -63,7 +65,15 @@ export interface PlanoCorteCarrinhoAbandonado {
   diasAbandonado: number;
   dataUltimaModificacao: string;
   dataCadastro: string;
-  tentativasContato?: number;
+}
+
+export interface PlanoCorteAguardandoVendedor {
+  nome: string;
+  email: string;
+  valorProjeto: number;
+  diasAguardando: number;
+  dataEnvio: string;
+  urgencia: 'Alta' | 'Média' | 'Baixa';
 }
 
 export interface PlanoCorteClienteCancelado {
@@ -72,17 +82,16 @@ export interface PlanoCorteClienteCancelado {
   pedidosCancelados: number;
   valorPerdido: number;
   ultimoCancelamento: string;
-  motivoCancelamento?: string;
   diasUltimoCancelamento: number;
 }
 
-export interface PlanoCorteConfigurandoArquivo {
+export interface PlanoCorteClienteAprovado {
   nome: string;
   email: string;
-  valorProjeto: number;
-  diasTentandoConfigurar: number;
-  dataUltimaTentativa: string;
-  tentativasConfiguracao: number;
+  valorPedido: number;
+  diasAprovado: number;
+  dataAprovacao: string;
+  statusProducao: 'Normal' | 'Atenção' | 'Atraso';
 }
 
 export interface PlanoCorteMetrica30Dias {

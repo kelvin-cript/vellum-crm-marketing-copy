@@ -58,11 +58,12 @@ export const usePlanoCorteProcessor = () => {
         totalPedidos: 0,
         totalReceita: 0,
         ticketMedio: 0,
-        pedidosFinalizados: 0,
-        pedidosCancelados: 0,
-        carrinhoAbandonado: 0,
+        aguardandoAprovacao: 0,
         aguardandoVendedor: 0,
-        configurandoArquivo: 0,
+        aprovados: 0,
+        finalizados: 0,
+        entregues: 0,
+        pedidosCancelados: 0,
         valorPerdidoCancelamentos: 0,
         taxaCancelamento: 0,
         taxaConversao: 0,
@@ -70,8 +71,9 @@ export const usePlanoCorteProcessor = () => {
         melhoresClientes: [],
         clientesRecorrentes: [],
         carrinhoAbandonadoClientes: [],
+        clientesAguardandoVendedor: [],
         clientesCancelados: [],
-        clientesConfigurandoArquivo: [],
+        clientesAprovados: [],
         metricas30Dias: {
           novosClientes: 0,
           pedidosFinalizados: 0,
@@ -88,31 +90,40 @@ export const usePlanoCorteProcessor = () => {
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
 
-    // Métricas básicas
+    // Métricas básicas baseadas nos status corretos
     const totalPedidos = filteredData.length;
     const totalClientes = new Set(filteredData.map(item => item.email)).size;
     
-    const pedidosFinalizados = filteredData.filter(item => 
-      item.status.toLowerCase().includes('finalizado')
-    );
-    const pedidosCancelados = filteredData.filter(item => 
-      item.status.toLowerCase().includes('cancelado')
-    );
-    const carrinhoAbandonado = filteredData.filter(item => 
+    // Status do funil de vendas
+    const aguardandoAprovacao = filteredData.filter(item => 
       item.status.toLowerCase().includes('aguardando aprovação')
     );
     const aguardandoVendedor = filteredData.filter(item => 
       item.status.toLowerCase().includes('aguardando retorno do vendedor')
     );
-    const configurandoArquivo = filteredData.filter(item => 
-      item.status.toLowerCase().includes('configurando arquivo')
+    const aprovados = filteredData.filter(item => 
+      item.status.toLowerCase().includes('aprovado')
+    );
+    const finalizados = filteredData.filter(item => 
+      item.status.toLowerCase().includes('finalizado')
+    );
+    const entregues = filteredData.filter(item => 
+      item.status.toLowerCase().includes('entregue')
+    );
+    const pedidosCancelados = filteredData.filter(item => 
+      item.status.toLowerCase().includes('cancelado')
     );
 
-    const totalReceita = pedidosFinalizados.reduce((sum, item) => sum + item.valorTotal, 0);
+    // Receita total (aprovados + finalizados + entregues = pedidos que geraram receita)
+    const pedidosComReceita = [...aprovados, ...finalizados, ...entregues];
+    const totalReceita = pedidosComReceita.reduce((sum, item) => sum + item.valorTotal, 0);
     const valorPerdidoCancelamentos = pedidosCancelados.reduce((sum, item) => sum + item.valorTotal, 0);
-    const ticketMedio = pedidosFinalizados.length > 0 ? totalReceita / pedidosFinalizados.length : 0;
+    const ticketMedio = pedidosComReceita.length > 0 ? totalReceita / pedidosComReceita.length : 0;
     const taxaCancelamento = totalPedidos > 0 ? (pedidosCancelados.length / totalPedidos) * 100 : 0;
-    const taxaConversao = totalPedidos > 0 ? (pedidosFinalizados.length / totalPedidos) * 100 : 0;
+    
+    // Taxa de conversão = (aprovados + finalizados + entregues) / total de pedidos
+    const pedidosConvertidos = aprovados.length + finalizados.length + entregues.length;
+    const taxaConversao = totalPedidos > 0 ? (pedidosConvertidos / totalPedidos) * 100 : 0;
 
     // Análise de clientes
     const clienteMap = new Map();
@@ -135,7 +146,10 @@ export const usePlanoCorteProcessor = () => {
         data: item.dataModificacao || item.dataCadastro
       });
 
-      if (item.status.toLowerCase().includes('finalizado')) {
+      // Só conta como gasto se o pedido foi aprovado, finalizado ou entregue
+      if (item.status.toLowerCase().includes('aprovado') || 
+          item.status.toLowerCase().includes('finalizado') || 
+          item.status.toLowerCase().includes('entregue')) {
         cliente.totalGasto += item.valorTotal;
       }
       
@@ -153,8 +167,9 @@ export const usePlanoCorteProcessor = () => {
       clienteMap.set(item.email, cliente);
     });
 
-    // Melhores clientes
+    // Melhores clientes (baseado no valor efetivamente gasto)
     const melhoresClientes = Array.from(clienteMap.values())
+      .filter(cliente => cliente.totalGasto > 0) // Só clientes que gastaram dinheiro
       .map(cliente => {
         const diasDesdeUltimoPedido = Math.ceil(
           (now.getTime() - new Date(cliente.ultimoPedido).getTime()) / (1000 * 60 * 60 * 24)
@@ -168,7 +183,11 @@ export const usePlanoCorteProcessor = () => {
           email: cliente.email,
           totalPedidos: cliente.totalPedidos,
           totalGasto: cliente.totalGasto,
-          ticketMedio: cliente.totalPedidos > 0 ? cliente.totalGasto / cliente.totalPedidos : 0,
+          ticketMedio: cliente.totalGasto > 0 ? cliente.totalGasto / cliente.pedidos.filter(p => 
+            p.status.toLowerCase().includes('aprovado') || 
+            p.status.toLowerCase().includes('finalizado') || 
+            p.status.toLowerCase().includes('entregue')
+          ).length : 0,
           ultimoPedido: cliente.ultimoPedido,
           statusUltimoPedido: cliente.statusUltimoPedido,
           diasDesdeUltimoPedido,
@@ -207,7 +226,11 @@ export const usePlanoCorteProcessor = () => {
           email: cliente.email,
           totalPedidos: cliente.totalPedidos,
           totalGasto: cliente.totalGasto,
-          ticketMedio: cliente.totalPedidos > 0 ? cliente.totalGasto / cliente.totalPedidos : 0,
+          ticketMedio: cliente.totalGasto > 0 ? cliente.totalGasto / cliente.pedidos.filter(p => 
+            p.status.toLowerCase().includes('aprovado') || 
+            p.status.toLowerCase().includes('finalizado') || 
+            p.status.toLowerCase().includes('entregue')
+          ).length : 0,
           ultimoPedido: cliente.ultimoPedido,
           statusUltimoPedido: cliente.statusUltimoPedido,
           intervaloMedioPedidos,
@@ -217,8 +240,8 @@ export const usePlanoCorteProcessor = () => {
       .sort((a, b) => b.totalPedidos - a.totalPedidos)
       .slice(0, 30);
 
-    // Carrinho abandonado
-    const carrinhoAbandonadoClientes = carrinhoAbandonado.map(item => {
+    // Carrinho abandonado (Aguardando Aprovação)
+    const carrinhoAbandonadoClientes = aguardandoAprovacao.map(item => {
       const diasAbandonado = Math.ceil(
         (now.getTime() - new Date(item.dataModificacao || item.dataCadastro).getTime()) / (1000 * 60 * 60 * 24)
       );
@@ -233,6 +256,42 @@ export const usePlanoCorteProcessor = () => {
       };
     })
     .sort((a, b) => b.valorCarrinho - a.valorCarrinho)
+    .slice(0, 30);
+
+    // Clientes aguardando vendedor
+    const clientesAguardandoVendedor = aguardandoVendedor.map(item => {
+      const diasAguardando = Math.ceil(
+        (now.getTime() - new Date(item.dataModificacao || item.dataCadastro).getTime()) / (1000 * 60 * 60 * 24)
+      );
+
+      return {
+        nome: item.cliente,
+        email: item.email,
+        valorProjeto: item.valorTotal,
+        diasAguardando,
+        dataEnvio: item.dataModificacao || item.dataCadastro,
+        urgencia: diasAguardando > 7 ? 'Alta' : diasAguardando > 3 ? 'Média' : 'Baixa'
+      };
+    })
+    .sort((a, b) => b.valorProjeto - a.valorProjeto)
+    .slice(0, 30);
+
+    // Clientes com pedidos aprovados
+    const clientesAprovados = aprovados.map(item => {
+      const diasAprovado = Math.ceil(
+        (now.getTime() - new Date(item.dataModificacao || item.dataCadastro).getTime()) / (1000 * 60 * 60 * 24)
+      );
+
+      return {
+        nome: item.cliente,
+        email: item.email,
+        valorPedido: item.valorTotal,
+        diasAprovado,
+        dataAprovacao: item.dataModificacao || item.dataCadastro,
+        statusProducao: diasAprovado > 15 ? 'Atraso' : diasAprovado > 10 ? 'Atenção' : 'Normal'
+      };
+    })
+    .sort((a, b) => b.valorPedido - a.valorPedido)
     .slice(0, 30);
 
     // Clientes cancelados
@@ -266,24 +325,6 @@ export const usePlanoCorteProcessor = () => {
       .sort((a, b) => b.valorPerdido - a.valorPerdido)
       .slice(0, 20);
 
-    // Clientes configurando arquivo
-    const clientesConfigurandoArquivo = configurandoArquivo.map(item => {
-      const diasTentandoConfigurar = Math.ceil(
-        (now.getTime() - new Date(item.dataModificacao || item.dataCadastro).getTime()) / (1000 * 60 * 60 * 24)
-      );
-
-      return {
-        nome: item.cliente,
-        email: item.email,
-        valorProjeto: item.valorTotal,
-        diasTentandoConfigurar,
-        dataUltimaTentativa: item.dataModificacao || item.dataCadastro,
-        tentativasConfiguracao: 1 // Pode ser expandido se houver mais dados
-      };
-    })
-    .sort((a, b) => b.valorProjeto - a.valorProjeto)
-    .slice(0, 20);
-
     // Métricas dos últimos 30 dias
     const dados30Dias = filteredData.filter(item => 
       new Date(item.dataCadastro) >= thirtyDaysAgo
@@ -292,16 +333,25 @@ export const usePlanoCorteProcessor = () => {
     const metricas30Dias = {
       novosClientes: new Set(dados30Dias.map(item => item.email)).size,
       pedidosFinalizados: dados30Dias.filter(item => 
-        item.status.toLowerCase().includes('finalizado')
+        item.status.toLowerCase().includes('finalizado') || 
+        item.status.toLowerCase().includes('entregue')
       ).length,
       receitaGerada: dados30Dias
-        .filter(item => item.status.toLowerCase().includes('finalizado'))
+        .filter(item => 
+          item.status.toLowerCase().includes('aprovado') || 
+          item.status.toLowerCase().includes('finalizado') || 
+          item.status.toLowerCase().includes('entregue')
+        )
         .reduce((sum, item) => sum + item.valorTotal, 0),
       carrinhoAbandonado: dados30Dias.filter(item => 
         item.status.toLowerCase().includes('aguardando aprovação')
       ).length,
       taxaConversao: dados30Dias.length > 0 ? 
-        (dados30Dias.filter(item => item.status.toLowerCase().includes('finalizado')).length / dados30Dias.length) * 100 : 0,
+        (dados30Dias.filter(item => 
+          item.status.toLowerCase().includes('aprovado') || 
+          item.status.toLowerCase().includes('finalizado') || 
+          item.status.toLowerCase().includes('entregue')
+        ).length / dados30Dias.length) * 100 : 0,
       crescimentoReceita: 15.5 // Placeholder - pode ser calculado com dados históricos
     };
 
@@ -336,11 +386,12 @@ export const usePlanoCorteProcessor = () => {
       totalPedidos,
       totalReceita,
       ticketMedio,
-      pedidosFinalizados: pedidosFinalizados.length,
-      pedidosCancelados: pedidosCancelados.length,
-      carrinhoAbandonado: carrinhoAbandonado.length,
+      aguardandoAprovacao: aguardandoAprovacao.length,
       aguardandoVendedor: aguardandoVendedor.length,
-      configurandoArquivo: configurandoArquivo.length,
+      aprovados: aprovados.length,
+      finalizados: finalizados.length,
+      entregues: entregues.length,
+      pedidosCancelados: pedidosCancelados.length,
       valorPerdidoCancelamentos,
       taxaCancelamento,
       taxaConversao,
@@ -348,8 +399,9 @@ export const usePlanoCorteProcessor = () => {
       melhoresClientes,
       clientesRecorrentes,
       carrinhoAbandonadoClientes,
+      clientesAguardandoVendedor,
       clientesCancelados,
-      clientesConfigurandoArquivo,
+      clientesAprovados,
       metricas30Dias,
       funil,
       temposPorStatus
@@ -479,34 +531,50 @@ export const usePlanoCorteProcessor = () => {
       {
         'Cliente': 'João Silva',
         'Email': 'joao.silva@email.com',
-        'Status': 'Finalizado',
+        'Status': 'Aguardando aprovação',
         'Data Cadastro': '2024-01-15',
-        'Data Modificação': '2024-01-20',
+        'Data Modificação': '2024-01-18',
         'Valor Total': 1250.50
       },
       {
         'Cliente': 'Maria Santos',
         'Email': 'maria.santos@email.com',
-        'Status': 'Aguardando Aprovação',
+        'Status': 'Aguardando retorno do vendedor',
         'Data Cadastro': '2024-01-18',
-        'Data Modificação': '2024-01-18',
+        'Data Modificação': '2024-01-20',
         'Valor Total': 890.00
       },
       {
         'Cliente': 'Pedro Costa',
         'Email': 'pedro.costa@email.com',
-        'Status': 'Configurando Arquivo',
+        'Status': 'Aprovado',
         'Data Cadastro': '2024-01-20',
-        'Data Modificação': '2024-01-22',
+        'Data Modificação': '2024-01-25',
         'Valor Total': 2100.75
       },
       {
         'Cliente': 'Ana Oliveira',
         'Email': 'ana.oliveira@email.com',
-        'Status': 'Cancelado',
+        'Status': 'Finalizado',
         'Data Cadastro': '2024-01-10',
-        'Data Modificação': '2024-01-25',
+        'Data Modificação': '2024-02-01',
         'Valor Total': 750.00
+      },
+      {
+        'Cliente': 'Carlos Mendes',
+        'Email': 'carlos.mendes@email.com',
+        'Status': 'Entregue',
+        'Data Cadastro': '2024-01-05',
+        'Data Modificação': '2024-02-10',
+        'Valor Total': 1850.25
+      },
+      {
+        'Cliente': 'Lucia Ferreira',
+        'Email': 'lucia.ferreira@email.com',
+        'Status': 'Cancelado',
+        'Data Cadastro': '2024-01-12',
+        'Data Modificação': '2024-01-15',
+        'Valor Total': 450.00
       }
     ];
 

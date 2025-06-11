@@ -146,13 +146,14 @@ export const PlanoCorteFileUpload: React.FC<PlanoCorteFileUploadProps> = ({
             </div>
             
             <div className="mt-4 p-3 bg-white/5 rounded-lg border border-blue-500/20">
-              <p className="text-blue-400 font-medium mb-2">Status possíveis:</p>
+              <p className="text-blue-400 font-medium mb-2">Status do Funil de Vendas:</p>
               <div className="text-xs space-y-1">
-                <p><strong>Aguardando Aprovação:</strong> Carrinho abandonado</p>
-                <p><strong>Aguardando Retorno do Vendedor:</strong> Pedido enviado para vendedor</p>
-                <p><strong>Configurando Arquivo:</strong> Cliente tentando subir projeto</p>
-                <p><strong>Finalizado:</strong> Pedido concluído</p>
-                <p><strong>Cancelado:</strong> Pedido cancelado</p>
+                <p><strong>Aguardando aprovação:</strong> Cliente enviou projeto, carrinho abandonado</p>
+                <p><strong>Aguardando retorno do vendedor:</strong> Projeto enviado para análise</p>
+                <p><strong>Aprovado:</strong> Cliente pagou, projeto em produção</p>
+                <p><strong>Finalizado:</strong> Pronto na fábrica, aguardando entrega</p>
+                <p><strong>Entregue:</strong> Entregue ao transportador ou cliente</p>
+                <p><strong>Cancelado:</strong> Projeto cancelado</p>
               </div>
             </div>
           </div>
