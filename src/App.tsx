@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BarChart3, Database, TrendingUp, Zap, Sparkles, Cpu, Brain, Target, Rocket, Star, Award } from 'lucide-react';
 import { useDataProcessor } from './hooks/useDataProcessor';
 import { FileUpload } from './components/FileUpload';
@@ -6,8 +6,11 @@ import { DateFilter } from './components/DateFilter';
 import { ChannelFilter } from './components/ChannelFilter';
 import { Dashboard } from './components/Dashboard';
 import { LaptopMockup } from './components/LaptopMockup';
+import { PlanoCorte } from './pages/PlanoCorte';
 
 function App() {
+  const [currentPage, setCurrentPage] = useState<'main' | 'plano-corte'>('main');
+  
   const { 
     processedData, 
     dateFilter, 
@@ -21,6 +24,10 @@ function App() {
     downloadSampleCSV,
     hasData 
   } = useDataProcessor();
+
+  if (currentPage ===  'plano-corte') {
+    return <PlanoCorte onBack={() => setCurrentPage('main')} />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
@@ -60,25 +67,36 @@ function App() {
               </div>
             </div>
             
-            {hasData && (
-              <div className="flex items-center space-x-6 text-sm text-gray-300">
-                <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/10">
-                  <Database className="w-4 h-4 text-blue-400" />
-                  <span className="text-white font-medium">{processedData.totalOrders + processedData.cancelledOrders}</span>
-                  <span>registros</span>
+            <div className="flex items-center space-x-4">
+              {/* Botão Plano de Corte */}
+              <button
+                onClick={() => setCurrentPage('plano-corte')}
+                className="flex items-center px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 transition-all duration-300 text-sm font-medium shadow-lg hover:shadow-xl transform hover:scale-105 group"
+              >
+                <Target className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
+                Plano de Corte
+              </button>
+              
+              {hasData && (
+                <div className="flex items-center space-x-6 text-sm text-gray-300">
+                  <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/10">
+                    <Database className="w-4 h-4 text-blue-400" />
+                    <span className="text-white font-medium">{processedData.totalOrders + processedData.cancelledOrders}</span>
+                    <span>registros</span>
+                  </div>
+                  <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/10">
+                    <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+                    <span className="text-emerald-400 font-medium">{processedData.totalOrders}</span>
+                    <span>faturados</span>
+                  </div>
+                  <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/10">
+                    <span className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></span>
+                    <span className="text-red-400 font-medium">{processedData.cancelledOrders}</span>
+                    <span>cancelados</span>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/10">
-                  <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
-                  <span className="text-emerald-400 font-medium">{processedData.totalOrders}</span>
-                  <span>faturados</span>
-                </div>
-                <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/10">
-                  <span className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></span>
-                  <span className="text-red-400 font-medium">{processedData.cancelledOrders}</span>
-                  <span>cancelados</span>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </header>
